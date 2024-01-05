@@ -10,7 +10,7 @@ MYSQL_HOST = os.getenv('MYSQL_HOST')
 MYSQL_USERNAME = os.getenv('MYSQL_USERNAME')
 MYSQL_PASSWORD = os.getenv('MYSQL_PASSWORD')
 DATABASE_NAME = os.getenv('DATABASE_NAME')
-SSL_CA = os.getenv('SSL_CA')
+# SSL_CA = os.getenv('SSL_CA')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
 client = OpenAI()
@@ -19,7 +19,7 @@ client = OpenAI()
 input_username = '田中太郎'
 input_mapplace = '品川'
 
-def create_connection(host_name, user_name, user_password, db_name, ssl_ca):
+def create_connection(host_name, user_name, user_password, db_name):
     conn = None
     try:
         conn = mysql.connector.connect(
@@ -27,7 +27,7 @@ def create_connection(host_name, user_name, user_password, db_name, ssl_ca):
             user=user_name,
             passwd=user_password,
             database=db_name,
-            ssl_ca=ssl_ca
+            # ssl_ca=ssl_ca
         )
     except Error as e:
         print(f"The error '{e}' occurred")
@@ -93,9 +93,9 @@ def generate_story_module():
     user = MYSQL_USERNAME
     password = MYSQL_PASSWORD
     database = DATABASE_NAME
-    ssl_ca = SSL_CA
+    # ssl_ca = SSL_CA
 
-    conn = create_connection(host, user, password, database, ssl_ca)
+    conn = create_connection(host, user, password, database)
     # ユーザーに物語の参照または新規作成を選択させる
     choice = input("新しい物語を生成するには 'new' を、過去の物語を参照するにはそのIDを入力してください: ")
 
