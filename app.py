@@ -3,7 +3,7 @@
 from flask import Flask, jsonify, request, abort, url_for, render_template
 import requests
 import json
-import marshmallow as ma
+# import marshmallow as ma
 from flask_smorest import Api, Blueprint, abort
 from mysql_files import gen_mission
 
@@ -14,9 +14,9 @@ app.config["OPENAPI_VERSION"] = "3.0.2"
 app.json.ensure_ascii = False
 api = Api(app)
 
-class PetSchema(ma.Schema):
-    id = ma.fields.Int(dump_only=True)
-    name = ma.fields.String()
+# class PetSchema(ma.Schema):
+#     id = ma.fields.Int(dump_only=True)
+#     name = ma.fields.String()
 
 # サンプルのデータベース代わりにリストを使用
 tasks = [
