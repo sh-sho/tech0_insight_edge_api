@@ -32,6 +32,7 @@ tasks = [
     }
 ]
 
+
 # indexページの表示
 @app.route('/', methods=['GET'])
 def get_index():
