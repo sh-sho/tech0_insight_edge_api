@@ -65,28 +65,28 @@ def create_task():
     tasks.append(new_task)
     return jsonify({'task': new_task}), 201
 
-@app.route('/zipcode', methods=['GET'])
-def get_zipcode():
-    zipcode_url = 'https://zipcloud.ibsnet.co.jp/api/search?zipcode='
-    zipcode_number = '0010010'
-    try:
-        response = requests.get(zipcode_url + zipcode_number)
+# @app.route('/zipcode', methods=['GET'])
+# def get_zipcode():
+#     zipcode_url = 'https://zipcloud.ibsnet.co.jp/api/search?zipcode='
+#     zipcode_number = '0010010'
+#     try:
+#         response = requests.get(zipcode_url + zipcode_number)
 
-        if response.status_code == 200:
-            response = json.loads(response.text)
-            place = response['results']
-            return jsonify({'address':place})
-        else:
-            return jsonify({'error':'Failed to zipcode'})
-    except requests.exceptions.RequestException as e:
-        abort(500, description='Failed to fetch data from API')
+#         if response.status_code == 200:
+#             response = json.loads(response.text)
+#             place = response['results']
+#             return jsonify({'address':place})
+#         else:
+#             return jsonify({'error':'Failed to zipcode'})
+#     except requests.exceptions.RequestException as e:
+#         abort(500, description='Failed to fetch data from API')
 
-@app.route('/genstory', methods=['GET'])
-def get_story():
-    result = gen_mission.generate_story_module()
-    # print(result)
-    # print(type(result))
-    return jsonify({'genstory': result})
+# @app.route('/genstory', methods=['GET'])
+# def get_story():
+#     result = gen_mission.generate_story_module()
+#     # print(result)
+#     # print(type(result))
+#     return jsonify({'genstory': result})
 
 
 if __name__ == '__main__':
