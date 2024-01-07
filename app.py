@@ -81,12 +81,12 @@ def create_task():
 #     except requests.exceptions.RequestException as e:
 #         abort(500, description='Failed to fetch data from API')
 
-# @app.route('/genstory', methods=['GET'])
-# def get_story():
-#     result = gen_mission.generate_story_module()
-#     # print(result)
-#     # print(type(result))
-#     return jsonify({'genstory': result})
+@app.route('/genstory', methods=['GET'])
+def get_story():
+    result = gen_mission.generate_story_module()
+    # print(result)
+    # print(type(result))
+    return jsonify({'genstory': result})
 
 
 if __name__ == '__main__':
