@@ -1,4 +1,5 @@
 import os
+import openai
 from openai import OpenAI
 import mysql.connector
 from mysql.connector import Error
@@ -33,61 +34,90 @@ def create_connection(host_name, user_name, user_password, db_name):
         print(f"The error '{e}' occurred")
     return conn
 
-def save_story_to_db(conn, prompt, story):
+def save_mission_to_db(conn, prompt, story):
     cursor = conn.cursor()
     # cursor.execute("CREATE TABLE IF NOT EXISTS stories (id INT AUTO_INCREMENT PRIMARY KEY, story_text TEXT)")
     cursor.execute("INSERT INTO GenMission (GenMissionRequest, GenMissionResponse) VALUES (%s, %s);", (story, prompt))
     conn.commit()
 
-def get_story_by_id(conn, story_id):
+def get_mission_by_id(conn, story_id):
     cursor = conn.cursor()
     cursor.execute("SELECT story_text FROM stories WHERE id = %s;", (story_id,))
     result = cursor.fetchone()
     return result[0] if result else None
 
-def get_story_username(conn, input_username):
+def get_mission_username(conn, input_username):
     cursor = conn.cursor()
     cursor.execute("SELECT child.childname FROM user INNER JOIN child ON user.userid = child.userid WHERE user.username = %s ;", (input_username, ))
     result = cursor.fetchone()
     return result[0] if result else None
 
-def get_story_mapplace(conn, input_mapplace):
+def get_mission_mapplace(conn, input_mapplace):
     cursor = conn.cursor()
     cursor.execute("SELECT mapplace FROM map WHERE mapplace = %s ;", (input_mapplace, ))
     result = cursor.fetchone()
     return result[0] if result else None
 
+def create_mission_prompt(conn, input_username):
+    username = get_mission_username(conn, input_username)
+    prompt_mission_all = """あなたは優秀なストーリーテラーです。
+    以下の条件でミッションを生成してください。
+    ミッションのタイトルはありきたりなものではなく「実施者の年齢」でも興味が湧くものにしてください。
+    ミッションの内容はステップを分けて実施者が何をすればよいのか明確に指示してください。
+    ミッション数は最大で5つです。
+    分けたステップに対し、所要時間を記載してください。
+    ミッションの難易度は提示する「探求、探究リスト」を参考にし、年齢に応じて調整してください。
+    生成するミッションには条件の文言は使用せず「実施者の年齢」でも楽しめるように工夫してください。
+    生成されたミッションの文言を実施者が見ると想定して文言を生成してください。
+    文言はついミッションをやってみたくなるような親しみやすいものにしてください。
+    実施者の名前：
+    """ + username + """
+    文字数：500文字
+    実施者の年齢：5歳
+    ミッション実施者：子
+    ミッション監督者：親
+    ミッション所要時間：30分
+    場所：品川駅
+    対象：新幹線
+    探求、探究リスト：
+    ・対象を探す
+    ・対象が見えるところを探す
+    ・対象と似ているものを探す
+    ・対象と同じような色のものを複数集める
+    ・対象と同じような感触のものを複数集める
+    ・対象と同じような形のものを複数集める
+    ・その他、年齢に応じた最適な探求、探究
+    ミッション完了条件：
+    ・ミッションを通して発見したことを実施者は監督者に報告する
+    ・ミッションを通して発見したことをスケッチする
+    ・その他、年齢に応じた最適な振り返り方法
+    """
+    print(prompt_mission_all)
+    return prompt_mission_all
 
-def generate_story(conn, prompt, input_username, max_tokens=500):
-    # openai.api_key = OPENAI_API_KEY  # ここにあなたのAPIキーを入れてください
-    username = get_story_username(conn, input_username)
-    mapplace = get_story_mapplace(conn, input_mapplace)
-    prompt_all = """あなたは優秀なストーリーテラーです。次のガイドラインに従い、物語を出力してください。
-    # 指示
-    物語の題材:ポケモン
-    出力文字数:1000文字程度
-    主人公:
-    """+ username + """、ピカチュウ
-    舞台:
-    """+ mapplace + """
-    登場キャラクター：他のポケモンキャラクター
-    世界観：ポケモン
-    言語：日本語
-    出力内容:物語部分のみ物語部分のみ。コマンドに対する返答や補足説明は不要
-    次の文章に続く物語を生成
-    """ + prompt
-    print(prompt_all)
-    response = client.completions.create(
-        model="gpt-3.5-turbo-instruct",
-        prompt = prompt_all,
+def generate_mission(prompt_mission_all, max_tokens=800):
+    ### gpt-3.5-turbo
+    # response = client.completions.create(
+    #     model="gpt-3.5-turbo-instruct",
+    #     prompt = prompt_mission_all,
+    #     max_tokens = max_tokens
+    # )
+    # generated_mission = response.choices[0].text
+
+    ### gpt-4
+    response = client.chat.completions.create(
+        model="gpt-4",
+        messages=[
+            {"role": "system", "content": prompt_mission_all}
+        ],
         max_tokens = max_tokens
     )
     # print(response)
-    story = response.choices[0].text
+    generated_mission = response.choices[0].message.content
     # print(type(story))
-    return story
+    return generated_mission
 
-def generate_story_module():
+def generate_mission_module():
     # MySQLデータベースの接続情報を設定
     host = MYSQL_HOST
     user = MYSQL_USERNAME
@@ -97,32 +127,17 @@ def generate_story_module():
 
     conn = create_connection(host, user, password, database)
     # ユーザーに物語の参照または新規作成を選択させる
-    choice = input("新しい物語を生成するには 'new' を、過去の物語を参照するにはそのIDを入力してください: ")
 
-    if choice.isdigit():
-        story_id = int(choice)
-        existing_story = get_story_by_id(conn, story_id)
-        if existing_story:
-            print("参照された物語:", existing_story)
-            prompt = existing_story + "\n\n続き: "  # 続編のプロンプト
-        else:
-            print("指定されたIDの物語は見つかりませんでした。新しい物語を生成します。")
-            prompt = input("物語の始まりを入力してください: ")
-    elif choice == 'new':
-        prompt = input("物語の始まりを入力してください: ")
-    else:
-        print("無効な選択です。新しい物語を生成します。")
-        prompt = input("物語の始まりを入力してください: ")
-
-    generated_story = generate_story(conn, prompt, input_username)
-    print("生成された物語:", generated_story)
+    prompt_mission_all = create_mission_prompt(conn, input_username)
+    generated_mission = generate_mission(prompt_mission_all)
+    print("生成されたMission:", generated_mission)
 
     # 生成された物語をデータベースに保存
-    save_story_to_db(conn, prompt, generated_story)
-    return generated_story
+    save_mission_to_db(conn, prompt_mission_all, generated_mission)
+    return generated_mission
 
 def main():
-    generate_story_module()
+    generate_mission_module()
 
 if __name__ == "__main__":
     main()

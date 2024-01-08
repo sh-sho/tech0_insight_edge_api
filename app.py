@@ -5,7 +5,7 @@ import requests
 import json
 # import marshmallow as ma
 # from flask_smorest import Api, Blueprint, abort
-from mysql_files import gen_mission
+from mysql_files import gen_mission, gen_story
 
 app = Flask(__name__)
 app.config["API_TITLE"] = "My API"
@@ -31,7 +31,6 @@ tasks = [
         'done': False
     }
 ]
-
 
 # indexページの表示
 @app.route('/', methods=['GET'])
@@ -65,27 +64,19 @@ def create_task():
     tasks.append(new_task)
     return jsonify({'task': new_task}), 201
 
-# @app.route('/zipcode', methods=['GET'])
-# def get_zipcode():
-#     zipcode_url = 'https://zipcloud.ibsnet.co.jp/api/search?zipcode='
-#     zipcode_number = '0010010'
-#     try:
-#         response = requests.get(zipcode_url + zipcode_number)
-
-#         if response.status_code == 200:
-#             response = json.loads(response.text)
-#             place = response['results']
-#             return jsonify({'address':place})
-#         else:
-#             return jsonify({'error':'Failed to zipcode'})
-#     except requests.exceptions.RequestException as e:
-#         abort(500, description='Failed to fetch data from API')
+@app.route('/genmission', methods=['GET'])
+def get_mission():
+    result = gen_mission.generate_mission_module()
+    return jsonify({'genmission': result})
 
 @app.route('/genstory', methods=['GET'])
 def get_story():
-    result = gen_mission.generate_story_module()
-    # print(result)
-    # print(type(result))
+    req = request.args
+    input_story_id = req.get('story_id')
+    print(input_story_id)
+    input_story_start = req.get('story_start')
+    print(input_story_start)
+    result = gen_story.generate_story_module(input_story_id, input_story_start)
     return jsonify({'genstory': result})
 
 
